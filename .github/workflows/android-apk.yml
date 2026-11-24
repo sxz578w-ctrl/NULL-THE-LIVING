@@ -1,22 +1,16 @@
-name: AFTERZERO Android Build
-
+name: Android APK Build
 on:
   push:
     branches:
       - main
       - feature/afterzero-foundation
   workflow_dispatch:
-
-permissions:
-  contents: read
-
 jobs:
   android:
-    name: Validate and export Android ARM64
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
-      - name: Checkout source
+      - name: Checkout repository
         uses: actions/checkout@v5
 
       - name: Set up Java 17
@@ -25,7 +19,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Configure Android SDK
+      - name: Configure and install Android SDK
         shell: bash
         run: |
           set -euo pipefail
@@ -39,7 +33,7 @@ jobs:
           test -x "$SDK_ROOT/platform-tools/adb"
           test -x "$SDK_ROOT/build-tools/36.1.0/aapt"
 
-      - name: Download Godot 4.7.2 and Android templates
+      - name: Download Godot 4.7.2 and matching Android templates
         shell: bash
         run: |
           set -euo pipefail
@@ -59,7 +53,7 @@ jobs:
           test -s "$TEMPLATE_DIR/android_release.apk"
           test -s "$TEMPLATE_DIR/android_source.zip"
 
-      - name: Configure Godot Android paths
+      - name: Configure Android paths and Godot binary
         shell: bash
         run: |
           set -euo pipefail
@@ -80,7 +74,7 @@ jobs:
       - name: Install Python test dependency
         run: python -m pip install --disable-pip-version-check pytest
 
-      - name: Run repository contract tests
+      - name: Run repository structure tests
         run: python -m pytest -q
 
       - name: Import and parse Godot project
@@ -89,10 +83,12 @@ jobs:
           "$GODOT_BIN" --headless --editor --path . --quit
 
       - name: Run gameplay logic tests
-        run: "$GODOT_BIN" --headless --path . --script res://tests/run_tests.gd
+        run: |
+          "$GODOT_BIN" --headless --path . --script res://tests/run_tests.gd
 
-      - name: Smoke run main scene
-        run: "$GODOT_BIN" --headless --path . --quit-after 5
+      - name: Smoke run the main scene
+        run: |
+          "$GODOT_BIN" --headless --path . --quit-after 3
 
       - name: Export Android ARM64 debug APK
         shell: bash
