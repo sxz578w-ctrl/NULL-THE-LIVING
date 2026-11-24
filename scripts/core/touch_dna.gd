@@ -31,6 +31,14 @@ static func classify(points: Array, duration: float, tap_intervals: Array, seque
 		shape = "swipe"
 	elif path_length >= 0.12:
 		shape = "curve"
+	if shape == "loop" and points.size() >= 4:
+		var center_point_count := points.size()
+		if points[0].distance_to(points[points.size() - 1]) <= loop_close_ratio:
+			center_point_count -= 1
+		loop_center = Vector2.ZERO
+		for center_index in center_point_count:
+			loop_center += points[center_index]
+		loop_center /= float(center_point_count)
 	var tempo := "single"
 	var interval_total := 0.0
 	for gap in tap_intervals:
