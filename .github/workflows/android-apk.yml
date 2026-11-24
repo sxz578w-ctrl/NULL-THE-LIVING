@@ -82,10 +82,12 @@ jobs:
           "$GODOT_BIN" --headless --editor --path . --quit
 
       - name: Run gameplay logic tests
-        run: "$GODOT_BIN" --headless --path . --script res://tests/test_runner.gd
+        run: |
+          "$GODOT_BIN" --headless --path . --script res://tests/test_runner.gd
 
       - name: Smoke run the main scene
-        run: "$GODOT_BIN" --headless --path . --quit-after 3
+        run: |
+          "$GODOT_BIN" --headless --path . --quit-after 3
 
       - name: Export Android ARM64 debug APK
         shell: bash
