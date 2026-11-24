@@ -10,15 +10,19 @@ var touch_index: int = -1
 var joystick_origin: Vector2 = Vector2.ZERO
 var joystick_value: Vector2 = Vector2.ZERO
 var screen_size: Vector2 = Vector2(1280.0, 720.0)
+var action_buttons: Dictionary = {}
+var pause_button: Button
+var current_language: String = "ar"
 
 func _ready() -> void:
 	layer = 20
 	screen_size = get_viewport().get_visible_rect().size
 	_create_joystick_hint()
-	_create_button("ATTACK", Vector2(-112.0, -108.0), attack_pressed.emit)
-	_create_button("DASH", Vector2(-222.0, -70.0), dash_pressed.emit)
-	_create_button("USE", Vector2(-112.0, -220.0), interact_pressed.emit)
+	_create_button("attack", Vector2(-112.0, -108.0), attack_pressed.emit)
+	_create_button("dash", Vector2(-222.0, -70.0), dash_pressed.emit)
+	_create_button("interact", Vector2(-112.0, -220.0), interact_pressed.emit)
 	_create_pause_button()
+	set_language(current_language)
 
 func _create_joystick_hint() -> void:
 	var panel := Panel.new()
@@ -39,9 +43,8 @@ func _create_joystick_hint() -> void:
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(panel)
 
-func _create_button(label_text: String, offset: Vector2, callback: Callable) -> void:
+func _create_button(role: String, offset: Vector2, callback: Callable) -> void:
 	var button := Button.new()
-	button.text = label_text
 	button.custom_minimum_size = Vector2(94.0, 76.0)
 	button.anchor_left = 1.0
 	button.anchor_right = 1.0
@@ -60,22 +63,35 @@ func _create_button(label_text: String, offset: Vector2, callback: Callable) -> 
 	style.set_corner_radius_all(18)
 	button.add_theme_stylebox_override("normal", style)
 	add_child(button)
+	action_buttons[role] = button
 	button.pressed.connect(callback)
 
 func _create_pause_button() -> void:
-	var button := Button.new()
-	button.text = "Ⅱ"
-	button.anchor_left = 1.0
-	button.anchor_right = 1.0
-	button.anchor_top = 0.0
-	button.anchor_bottom = 0.0
-	button.offset_left = -66.0
-	button.offset_top = 22.0
-	button.offset_right = -20.0
-	button.offset_bottom = 68.0
-	button.add_theme_font_size_override("font_size", 22)
-	add_child(button)
-	button.pressed.connect(pause_pressed.emit)
+	pause_button = Button.new()
+	pause_button.anchor_left = 1.0
+	pause_button.anchor_right = 1.0
+	pause_button.anchor_top = 0.0
+	pause_button.anchor_bottom = 0.0
+	pause_button.offset_left = -66.0
+	pause_button.offset_top = 22.0
+	pause_button.offset_right = -20.0
+	pause_button.offset_bottom = 68.0
+	pause_button.add_theme_font_size_override("font_size", 22)
+	add_child(pause_button)
+	pause_button.pressed.connect(pause_pressed.emit)
+
+func set_language(language: String) -> void:
+	current_language = language
+	var labels := {
+		"ar": {"attack": "هجوم", "dash": "اندفاع", "interact": "تفاعل", "pause": "Ⅱ"},
+		"en": {"attack": "ATTACK", "dash": "DASH", "interact": "USE", "pause": "Ⅱ"}
+	}
+	var chosen: Dictionary = labels.get(current_language, labels["ar"])
+	for role: Variant in action_buttons.keys():
+		var button: Button = action_buttons[role]
+		button.text = str(chosen[role])
+		button.layout_direction = Control.LAYOUT_DIRECTION_RTL if current_language == "ar" else Control.LAYOUT_DIRECTION_LTR
+	pause_button.text = str(chosen["pause"])
 
 func _input(event: InputEvent) -> void:
 	screen_size = get_viewport().get_visible_rect().size
@@ -100,7 +116,4 @@ func _input(event: InputEvent) -> void:
 func _process(_delta: float) -> void:
 	if touch_index == -1:
 		var keyboard := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-		if keyboard.length() > 0.05:
-			movement_changed.emit(keyboard)
-		else:
-			movement_changed.emit(Vector2.ZERO)
+		movement_changed.emit(keyboard)

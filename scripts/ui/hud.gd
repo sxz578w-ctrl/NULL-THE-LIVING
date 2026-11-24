@@ -7,16 +7,25 @@ signal pause_toggled(paused: bool)
 
 var status_label: Label
 var stats_label: Label
+var health_bar: ProgressBar
 var objective_label: Label
+var title_label: Label
+var language_button: Button
 var choice_panel: PanelContainer
 var choice_box: VBoxContainer
+var pause_panel: PanelContainer
 var paused: bool = false
 var current_language: String = "ar"
 var active_slot: String = ""
+var last_resources: Dictionary = {"scrap": 30, "flux": 8, "echo": 0}
+var last_health: float = 100.0
+var last_zone: Dictionary = {"stability": 45, "danger": 55}
+var last_puzzle_progress: int = 0
 
 func _ready() -> void:
 	layer = 10
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	TranslationServer.set_locale(current_language)
 	_build_hud()
 
 func _panel_style(panel: PanelContainer, color: Color = Color(0.04, 0.08, 0.11, 0.94)) -> void:
@@ -39,36 +48,42 @@ func _build_hud() -> void:
 
 	var top_panel := PanelContainer.new()
 	top_panel.position = Vector2(20.0, 18.0)
-	top_panel.custom_minimum_size = Vector2(390.0, 94.0)
+	top_panel.custom_minimum_size = Vector2(390.0, 112.0)
 	_panel_style(top_panel)
 	root.add_child(top_panel)
 
 	var stack := VBoxContainer.new()
 	top_panel.add_child(stack)
-	var title := Label.new()
-	title.text = "AFTERZERO  //  SECTOR 01"
-	title.add_theme_font_size_override("font_size", 18)
-	title.add_theme_color_override("font_color", Color(0.26, 0.84, 0.8))
-	stack.add_child(title)
+
+	title_label = Label.new()
+	title_label.add_theme_font_size_override("font_size", 18)
+	title_label.add_theme_color_override("font_color", Color(0.26, 0.84, 0.8))
+	stack.add_child(title_label)
 
 	stats_label = Label.new()
-	stats_label.text = "SCRAP 30   FLUX 8   ECHO 0"
-	stats_label.add_theme_font_size_override("font_size", 16)
+	stats_label.add_theme_font_size_override("font_size", 15)
 	stack.add_child(stats_label)
 
+	health_bar = ProgressBar.new()
+	health_bar.custom_minimum_size = Vector2(320.0, 10.0)
+	health_bar.min_value = 0.0
+	health_bar.max_value = 100.0
+	health_bar.value = 100.0
+	health_bar.show_percentage = false
+	stack.add_child(health_bar)
+
 	objective_label = Label.new()
-	objective_label.text = "الهدف: اجمع الموارد وافحص موصلات النواة"
+	objective_label.position = Vector2(440.0, 30.0)
+	objective_label.custom_minimum_size = Vector2(430.0, 44.0)
 	objective_label.add_theme_font_size_override("font_size", 17)
-	objective_label.position = Vector2(430.0, 26.0)
-	objective_label.custom_minimum_size = Vector2(450.0, 44.0)
+	objective_label.add_theme_color_override("font_color", Color(0.86, 0.94, 0.93))
 	root.add_child(objective_label)
 
-	var lang_button := Button.new()
-	lang_button.text = "AR / EN"
-	lang_button.position = Vector2(1135.0, 22.0)
-	lang_button.custom_minimum_size = Vector2(110.0, 48.0)
-	root.add_child(lang_button)
-	lang_button.pressed.connect(_toggle_language)
+	language_button = Button.new()
+	language_button.position = Vector2(1135.0, 22.0)
+	language_button.custom_minimum_size = Vector2(110.0, 48.0)
+	root.add_child(language_button)
+	language_button.pressed.connect(_toggle_language)
 
 	choice_panel = PanelContainer.new()
 	choice_panel.anchor_left = 0.5
@@ -99,7 +114,7 @@ func _build_hud() -> void:
 	status_label.add_theme_color_override("font_color", Color(0.92, 0.95, 0.93))
 	root.add_child(status_label)
 
-	var pause_panel := PanelContainer.new()
+	pause_panel = PanelContainer.new()
 	pause_panel.anchor_left = 0.5
 	pause_panel.anchor_right = 0.5
 	pause_panel.anchor_top = 0.5
@@ -113,35 +128,56 @@ func _build_hud() -> void:
 	var pause_box := VBoxContainer.new()
 	pause_panel.add_child(pause_box)
 	var pause_title := Label.new()
-	pause_title.text = "PAUSED / متوقف"
+	pause_title.name = "PauseTitle"
 	pause_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pause_box.add_child(pause_title)
 	var resume := Button.new()
-	resume.text = "RESUME / متابعة"
+	resume.name = "ResumeButton"
 	pause_box.add_child(resume)
 	resume.pressed.connect(func() -> void: set_paused(false))
-	var language := Button.new()
-	language.text = "AR / EN"
-	pause_box.add_child(language)
-	language.pressed.connect(_toggle_language)
+	var pause_language := Button.new()
+	pause_language.text = "AR / EN"
+	pause_box.add_child(pause_language)
+	pause_language.pressed.connect(_toggle_language)
 	pause_panel.visible = false
-	set_meta("pause_panel", pause_panel)
+
+	_apply_language()
 
 func update_stats(resources: Dictionary, health: float, zone: Node, puzzle_progress: int) -> void:
+	last_resources = resources.duplicate(true)
+	last_health = health
+	last_zone = {"stability": int(zone.get("stability")), "danger": int(zone.get("danger"))}
+	last_puzzle_progress = puzzle_progress
+	_refresh_stats()
+
+func _refresh_stats() -> void:
 	if stats_label == null:
 		return
-	var prefix := "SCRAP %d   FLUX %d   ECHO %d" % [
-		int(resources.get("scrap", 0)),
-		int(resources.get("flux", 0)),
-		int(resources.get("echo", 0))
-	]
-	stats_label.text = prefix + "   HP %d%%" % roundi(health)
-	var pulse_text := "STABILITY %d   DANGER %d   CORE %d/3" % [
-		int(zone.get("stability")), int(zone.get("danger")), puzzle_progress
-	]
-	objective_label.text = pulse_text if current_language == "en" else "استقرار %d   خطر %d   النواة %d/3" % [
-		int(zone.stability), int(zone.danger), puzzle_progress
-	]
+	if current_language == "ar":
+		stats_label.text = "خردة %d   طاقة %d   صدى %d   صحة %d%%" % [
+			int(last_resources.get("scrap", 0)),
+			int(last_resources.get("flux", 0)),
+			int(last_resources.get("echo", 0)),
+			roundi(last_health)
+		]
+		objective_label.text = "استقرار %d   خطر %d   النواة %d/3" % [
+			int(last_zone.get("stability", 0)),
+			int(last_zone.get("danger", 0)),
+			last_puzzle_progress
+		]
+	else:
+		stats_label.text = "SCRAP %d   FLUX %d   ECHO %d   HP %d%%" % [
+			int(last_resources.get("scrap", 0)),
+			int(last_resources.get("flux", 0)),
+			int(last_resources.get("echo", 0)),
+			roundi(last_health)
+		]
+		objective_label.text = "STABILITY %d   DANGER %d   CORE %d/3" % [
+			int(last_zone.get("stability", 0)),
+			int(last_zone.get("danger", 0)),
+			last_puzzle_progress
+		]
+	health_bar.value = clampf(last_health, 0.0, 100.0)
 
 func show_message(message: String) -> void:
 	if status_label != null:
@@ -153,25 +189,36 @@ func show_pulse_choices(visible: bool) -> void:
 	if not visible:
 		return
 	var title := Label.new()
-	title.text = "WORLD PULSE  /  اختر مصير المنطقة"
+	title.text = "نبضة العالم — اختر مصير المنطقة" if current_language == "ar" else "WORLD PULSE — Choose this zone's future"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	choice_box.add_child(title)
-	_add_choice_button("ANCHOR — تثبيت المنطقة", "anchor")
-	_add_choice_button("HARVEST — حصاد الموارد", "harvest")
-	_add_choice_button("REFRACT — فتح مسار جديد", "refract")
+	if current_language == "ar":
+		_add_choice_button("تثبيت المنطقة — ANCHOR", "anchor")
+		_add_choice_button("حصاد الموارد — HARVEST", "harvest")
+		_add_choice_button("فتح مسار — REFRACT", "refract")
+	else:
+		_add_choice_button("ANCHOR — Stabilize zone", "anchor")
+		_add_choice_button("HARVEST — High resource yield", "harvest")
+		_add_choice_button("REFRACT — Open a new route", "refract")
 
 func show_build_choices(slot_id: String) -> void:
 	active_slot = slot_id
 	_clear_choice_panel()
 	choice_panel.visible = true
 	var title := Label.new()
-	title.text = "BUILD SLOT: " + slot_id.to_upper()
+	title.text = ("منصة البناء: " if current_language == "ar" else "BUILD SLOT: ") + slot_id.to_upper()
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	choice_box.add_child(title)
-	_add_build_button("EXTRACTOR  |  12 SCRAP + 2 FLUX", "extractor")
-	_add_build_button("RELAY  |  15 SCRAP + 2 ECHO", "relay")
-	_add_build_button("TURRET  |  18 SCRAP + 4 FLUX", "turret")
-	_add_cancel_button()
+	if current_language == "ar":
+		_add_build_button("مستخلص — 12 خردة + 2 طاقة", "extractor")
+		_add_build_button("مرحل — 15 خردة + 2 صدى", "relay")
+		_add_build_button("برج دفاع — 18 خردة + 4 طاقة", "turret")
+		_add_cancel_button("إلغاء")
+	else:
+		_add_build_button("EXTRACTOR | 12 SCRAP + 2 FLUX", "extractor")
+		_add_build_button("RELAY | 15 SCRAP + 2 ECHO", "relay")
+		_add_build_button("TURRET | 18 SCRAP + 4 FLUX", "turret")
+		_add_cancel_button("CANCEL")
 
 func _clear_choice_panel() -> void:
 	for child in choice_box.get_children():
@@ -197,9 +244,9 @@ func _add_build_button(text_value: String, building_type: String) -> void:
 		build_requested.emit(active_slot, building_type)
 	)
 
-func _add_cancel_button() -> void:
+func _add_cancel_button(text_value: String) -> void:
 	var button := Button.new()
-	button.text = "CANCEL / إلغاء"
+	button.text = text_value
 	choice_box.add_child(button)
 	button.pressed.connect(func() -> void: choice_panel.visible = false)
 
@@ -209,11 +256,43 @@ func toggle_pause() -> void:
 func set_paused(value: bool) -> void:
 	paused = value
 	get_tree().paused = value
-	var pause_panel := get_meta("pause_panel") as PanelContainer
 	if pause_panel != null:
 		pause_panel.visible = value
+		var title := pause_panel.find_child("PauseTitle", true, false) as Label
+		var resume := pause_panel.find_child("ResumeButton", true, false) as Button
+		if title != null:
+			title.text = "متوقف مؤقتاً" if current_language == "ar" else "PAUSED"
+		if resume != null:
+			resume.text = "متابعة" if current_language == "ar" else "RESUME"
 	pause_toggled.emit(value)
 
+func set_language(language: String) -> void:
+	if not ["ar", "en"].has(language):
+		return
+	current_language = language
+	TranslationServer.set_locale(language)
+	_apply_language()
+	_refresh_stats()
+	language_changed.emit(language)
+
+func _apply_language() -> void:
+	if title_label == null:
+		return
+	var direction := Control.LAYOUT_DIRECTION_RTL if current_language == "ar" else Control.LAYOUT_DIRECTION_LTR
+	if title_label.get_parent() != null:
+		(title_label.get_parent() as Control).layout_direction = direction
+	title_label.layout_direction = direction
+	title_label.text = "AFTERZERO  //  القطاع 01" if current_language == "ar" else "AFTERZERO  //  SECTOR 01"
+	language_button.text = "العربية" if current_language == "ar" else "ENGLISH"
+	objective_label.layout_direction = direction
+	stats_label.layout_direction = direction
+	status_label.layout_direction = direction
+	var pause_title := pause_panel.find_child("PauseTitle", true, false) as Label
+	var resume := pause_panel.find_child("ResumeButton", true, false) as Button
+	if pause_title != null:
+		pause_title.text = "متوقف مؤقتاً" if current_language == "ar" else "PAUSED"
+	if resume != null:
+		resume.text = "متابعة" if current_language == "ar" else "RESUME"
+
 func _toggle_language() -> void:
-	current_language = "en" if current_language == "ar" else "ar"
-	language_changed.emit(current_language)
+	set_language("en" if current_language == "ar" else "ar")

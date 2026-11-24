@@ -227,6 +227,8 @@ func _create_hud() -> void:
 	hud.pulse_choice_requested.connect(_on_pulse_choice)
 	hud.build_requested.connect(_on_build_requested)
 	hud.pause_toggled.connect(_on_pause_toggled)
+	hud.language_changed.connect(_on_language_changed)
+	touch_controls.set_language("ar")
 
 func _on_move_input(value: Vector2) -> void:
 	if is_instance_valid(player):
@@ -353,6 +355,10 @@ func _on_pause() -> void:
 
 func _on_pause_toggled(_value: bool) -> void:
 	pass
+
+func _on_language_changed(language: String) -> void:
+	if is_instance_valid(touch_controls):
+		touch_controls.set_language(language)
 
 func _update_hud() -> void:
 	if is_instance_valid(hud) and is_instance_valid(player):
