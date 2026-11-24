@@ -78,17 +78,35 @@ jobs:
         run: python -m pytest -q
 
       - name: Import and parse Godot project
+        shell: bash
         run: |
-          "$GODOT_BIN" --headless --editor --path . --import
-          "$GODOT_BIN" --headless --editor --path . --quit
+          set -euo pipefail
+          "$GODOT_BIN" --headless --editor --path . --import 2>&1 | tee /tmp/afterzero-import.log
+          "$GODOT_BIN" --headless --editor --path . --quit 2>&1 | tee /tmp/afterzero-parse.log
+          if grep -Eq "SCRIPT ERROR|Parse Error:|Failed to load script" /tmp/afterzero-import.log /tmp/afterzero-parse.log; then
+            echo "Godot import/parse log contains script errors."
+            exit 1
+          fi
 
       - name: Run gameplay logic tests
+        shell: bash
         run: |
-          "$GODOT_BIN" --headless --path . --script res://tests/run_tests.gd
+          set -euo pipefail
+          "$GODOT_BIN" --headless --path . --script res://tests/run_tests.gd 2>&1 | tee /tmp/afterzero-tests.log
+          if grep -Eq "SCRIPT ERROR|Parse Error:|Failed to load script|AFTERZERO TESTS: [0-9]+, [1-9][0-9]* failures" /tmp/afterzero-tests.log; then
+            echo "Gameplay test log contains a script or test failure."
+            exit 1
+          fi
 
       - name: Smoke run the main scene
+        shell: bash
         run: |
-          "$GODOT_BIN" --headless --path . --quit-after 3
+          set -euo pipefail
+          "$GODOT_BIN" --headless --path . --quit-after 5 2>&1 | tee /tmp/afterzero-smoke.log
+          if grep -Eq "SCRIPT ERROR|Parse Error:|Failed to load script" /tmp/afterzero-smoke.log; then
+            echo "Smoke run log contains script errors."
+            exit 1
+          fi
 
       - name: Export Android ARM64 debug APK
         shell: bash
