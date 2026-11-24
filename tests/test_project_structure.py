@@ -21,6 +21,14 @@ def test_core_logic_modules_exist():
         "scripts/world/zone_state.gd",
         "scripts/world/pulse_core.gd",
         "tests/run_tests.gd",
+        "scripts/main.gd",
+        "scripts/player/player_controller.gd",
+        "scripts/enemies/enemy_controller.gd",
+        "scripts/world/resource_node.gd",
+        "scripts/ui/hud.gd",
+        "scripts/ui/touch_controls.gd",
+        ".github/workflows/android-apk.yml",
+        "export_presets.cfg",
     ]
     for relative_path in required:
         assert (ROOT / relative_path).is_file(), relative_path
