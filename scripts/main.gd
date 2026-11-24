@@ -9,6 +9,8 @@ const HUDScript = preload("res://scripts/ui/hud.gd")
 
 var player
 var camera: Camera3D
+var route_gate_collision: CollisionShape3D
+var route_gate_visual: MeshInstance3D
 var touch_controls
 var hud
 var pulse_core = PulseCoreScript.new()
@@ -22,6 +24,7 @@ func _ready() -> void:
 	zone_rng.seed = 24112026
 	_create_environment()
 	_create_world()
+	_create_route_gate()
 	_create_player()
 	_create_resources()
 	_create_pylons()
@@ -123,6 +126,32 @@ func _create_world() -> void:
 	_create_box(self, "BaseCore", Vector3(0.0, 1.4, -1.0), Vector3(2.8, 2.8, 2.8), Color(0.17, 0.24, 0.28), Color(0.05, 0.23, 0.25))
 	_create_box(self, "CoreLight", Vector3(0.0, 3.05, -1.0), Vector3(0.55, 0.15, 0.55), Color(0.2, 0.85, 0.8), Color(0.2, 0.85, 0.8))
 
+
+func _create_route_gate() -> void:
+	var gate := StaticBody3D.new()
+	gate.name = "RefractedRouteGate"
+	gate.position = Vector3(0.0, 0.0, -18.0)
+	add_child(gate)
+
+	route_gate_collision = CollisionShape3D.new()
+	var gate_shape := BoxShape3D.new()
+	gate_shape.size = Vector3(4.4, 2.8, 0.65)
+	route_gate_collision.shape = gate_shape
+	route_gate_collision.position.y = 1.4
+	gate.add_child(route_gate_collision)
+
+	route_gate_visual = _create_box(gate, "SealedGate", Vector3(0.0, 1.4, 0.0), Vector3(4.4, 2.8, 0.65), Color(0.08, 0.2, 0.23), Color(0.02, 0.12, 0.15))
+	_create_box(gate, "GateLeftPillar", Vector3(-2.35, 1.5, 0.0), Vector3(0.35, 3.0, 0.5), Color(0.18, 0.53, 0.54), Color(0.05, 0.3, 0.31))
+	_create_box(gate, "GateRightPillar", Vector3(2.35, 1.5, 0.0), Vector3(0.35, 3.0, 0.5), Color(0.18, 0.53, 0.54), Color(0.05, 0.3, 0.31))
+	_create_box(gate, "GateLintel", Vector3(0.0, 2.95, 0.0), Vector3(5.0, 0.35, 0.5), Color(0.18, 0.53, 0.54), Color(0.05, 0.3, 0.31))
+
+func _apply_zone_visuals() -> void:
+	if route_gate_collision == null or route_gate_visual == null:
+		return
+	var open := bool(ZoneState.route_open)
+	route_gate_collision.disabled = open
+	route_gate_visual.visible = not open
+
 func _create_player() -> void:
 	player = PlayerScript.new()
 	player.name = "Player"
@@ -138,7 +167,8 @@ func _create_resources() -> void:
 		[Vector3(-12.0, 0.8, -4.0), "flux", 3],
 		[Vector3(15.0, 0.8, 8.0), "scrap", 9],
 		[Vector3(5.0, 0.8, -12.0), "echo", 2],
-		[Vector3(-17.0, 0.8, 8.0), "flux", 3]
+		[Vector3(-17.0, 0.8, 8.0), "flux", 3],
+		[Vector3(0.0, 0.8, -19.2), "echo", 4]
 	]
 	for entry in entries:
 		var node = ResourceNodeScript.new()
@@ -311,6 +341,12 @@ func _on_pulse_choice(choice: String) -> void:
 			ZoneState.danger = maxi(0, ZoneState.danger - 6)
 		for pylon: Node3D in pylon_nodes.values():
 			pylon.visible = false
+		if choice == "harvest":
+			_create_enemy(Vector3(-19.0, 0.0, 4.0))
+		if choice == "anchor":
+			for enemy: Node in get_tree().get_nodes_in_group("enemies"):
+				enemy.set("move_speed", 1.55)
+		_apply_zone_visuals()
 		_show_message("تم تطبيق %s. حالة المنطقة تغيرت." % choice.to_upper())
 		_save_progress()
 	else:
@@ -381,6 +417,7 @@ func _load_progress() -> void:
 			pylon.visible = false
 	for slot_id: Variant in BuildSystem.built_slots.keys():
 		_create_building_visual(str(slot_id), str(BuildSystem.built_slots[slot_id]))
+	_apply_zone_visuals()
 
 func _save_progress() -> void:
 	var data: Dictionary = SaveService.default_data()

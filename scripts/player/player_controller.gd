@@ -12,10 +12,12 @@ var dash_cooldown: float = 0.0
 var dash_time: float = 0.0
 var attack_cooldown: float = 0.0
 var facing: Vector3 = Vector3.FORWARD
+var spawn_position: Vector3 = Vector3.ZERO
 
 func _ready() -> void:
 	add_to_group("player")
 	current_health = max_health
+	spawn_position = global_position
 	_build_body()
 
 func _build_body() -> void:
@@ -72,6 +74,8 @@ func take_damage(amount: float) -> void:
 	health_changed.emit(current_health, max_health)
 	if current_health <= 0.0:
 		player_died.emit()
+		global_position = spawn_position
+		velocity = Vector3.ZERO
 		current_health = max_health
 		health_changed.emit(current_health, max_health)
 
