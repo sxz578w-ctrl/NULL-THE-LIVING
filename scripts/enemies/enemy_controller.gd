@@ -97,7 +97,13 @@ func _spawn_death_burst() -> void:
 	material.emission = Color(1.0, 0.12, 0.025)
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	burst.material_override = material
-	get_tree().current_scene.add_child(burst)
+	var effect_parent: Node = get_tree().current_scene
+	if effect_parent == null:
+		effect_parent = get_parent()
+	if effect_parent == null:
+		burst.queue_free()
+		return
+	effect_parent.add_child(burst)
 	var tween := create_tween()
 	tween.tween_property(burst, "scale", Vector3(3.0, 3.0, 3.0), 0.22)
 	tween.parallel().tween_property(material, "albedo_color:a", 0.0, 0.22)
