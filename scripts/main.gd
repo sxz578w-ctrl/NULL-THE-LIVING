@@ -44,24 +44,117 @@ func _create_environment() -> void:
 	environment.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
 	var sky_material := ProceduralSkyMaterial.new()
-	sky_material.sky_top_color = Color(0.025, 0.07, 0.11)
-	sky_material.sky_horizon_color = Color(0.12, 0.19, 0.22)
-	sky_material.ground_bottom_color = Color(0.025, 0.045, 0.055)
-	sky_material.ground_horizon_color = Color(0.10, 0.15, 0.16)
+	sky_material.sky_top_color = Color(0.012, 0.035, 0.065)
+	sky_material.sky_horizon_color = Color(0.11, 0.20, 0.23)
+	sky_material.ground_bottom_color = Color(0.012, 0.025, 0.035)
+	sky_material.ground_horizon_color = Color(0.07, 0.13, 0.15)
 	sky.sky_material = sky_material
 	environment.sky = sky
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.54, 0.68, 0.72)
-	environment.ambient_light_energy = 0.65
+	environment.ambient_light_color = Color(0.48, 0.66, 0.72)
+	environment.ambient_light_energy = 0.72
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	environment.tonemap_exposure = 1.05
 	environment_node.environment = environment
 	add_child(environment_node)
 
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-52.0, -28.0, 0.0)
-	sun.light_energy = 1.15
-	sun.shadow_enabled = false
+	sun.rotation_degrees = Vector3(-48.0, -32.0, 0.0)
+	sun.light_color = Color(0.70, 0.86, 0.91)
+	sun.light_energy = 1.35
+	sun.shadow_enabled = true
+	sun.directional_shadow_max_distance = 42.0
 	add_child(sun)
+
+	var key_light := OmniLight3D.new()
+	key_light.position = Vector3(0.0, 8.0, 0.0)
+	key_light.light_color = Color(0.12, 0.82, 0.85)
+	key_light.light_energy = 1.8
+	key_light.omni_range = 19.0
+	add_child(key_light)
+
+func _create_ruin(parent: Node3D, origin: Vector3, scale_factor: float, tint: Color) -> void:
+	var ruin := Node3D.new()
+	ruin.position = origin
+	parent.add_child(ruin)
+	var wall_height := 2.8 * scale_factor
+	_create_box(ruin, "RuinWall", Vector3.ZERO, Vector3(4.8, wall_height, 0.55) * scale_factor, tint, Color(0.025, 0.06, 0.075))
+	_create_box(ruin, "RuinBrokenTop", Vector3(-1.55 * scale_factor, wall_height * 0.56, 0.0), Vector3(1.1, 0.55, 0.8) * scale_factor, tint.lightened(0.13))
+	_create_box(ruin, "RuinSupport", Vector3(2.0 * scale_factor, -0.05, 0.0), Vector3(0.55, wall_height + 0.5, 0.8) * scale_factor, tint.darkened(0.18))
+	_create_box(ruin, "RuinLight", Vector3(0.0, 0.15 * scale_factor, 0.31 * scale_factor), Vector3(2.0, 0.07, 0.06) * scale_factor, Color(0.12, 0.68, 0.72), Color(0.06, 0.55, 0.62))
+
+func _create_world() -> void:
+	var floor_body := StaticBody3D.new()
+	floor_body.name = "ZoneFloor"
+	add_child(floor_body)
+	var floor_shape := CollisionShape3D.new()
+	var floor_box := BoxShape3D.new()
+	floor_box.size = Vector3(52.0, 0.6, 42.0)
+	floor_shape.shape = floor_box
+	floor_shape.position.y = -0.3
+	floor_body.add_child(floor_shape)
+	_create_box(floor_body, "Ground", Vector3(0.0, -0.3, 0.0), Vector3(52.0, 0.6, 42.0), Color(0.055, 0.095, 0.11))
+
+	var floor_material := _material(Color(0.075, 0.12, 0.14))
+	for x in range(-24, 25, 4):
+		for z in range(-18, 19, 4):
+			var tile := MeshInstance3D.new()
+			var tile_mesh := BoxMesh.new()
+			tile_mesh.size = Vector3(3.92, 0.035, 3.92)
+			tile.mesh = tile_mesh
+			tile.position = Vector3(float(x), 0.025, float(z))
+			tile.material_override = floor_material
+			floor_body.add_child(tile)
+
+	for x in range(-24, 25, 4):
+		_create_box(self, "FloorGuide_%d" % x, Vector3(float(x), 0.055, 0.0), Vector3(0.035, 0.025, 37.0), Color(0.11, 0.24, 0.26), Color(0.015, 0.10, 0.12))
+
+	for wall_data in [
+		[Vector3(0.0, 1.3, -21.0), Vector3(52.0, 2.6, 0.8)],
+		[Vector3(0.0, 1.3, 21.0), Vector3(52.0, 2.6, 0.8)],
+		[Vector3(-26.0, 1.3, 0.0), Vector3(0.8, 2.6, 42.0)],
+		[Vector3(26.0, 1.3, 0.0), Vector3(0.8, 2.6, 42.0)]
+	]:
+		var barrier := StaticBody3D.new()
+		barrier.position = wall_data[0]
+		add_child(barrier)
+		var barrier_shape := CollisionShape3D.new()
+		var barrier_box := BoxShape3D.new()
+		barrier_box.size = wall_data[1]
+		barrier_shape.shape = barrier_box
+		barrier.add_child(barrier_shape)
+		_create_box(barrier, "PerimeterWall", Vector3.ZERO, wall_data[1], Color(0.055, 0.105, 0.12))
+		_create_box(barrier, "PerimeterLight", Vector3(0.0, 0.0, 0.42), Vector3(wall_data[1].x, 0.055, 0.04), Color(0.12, 0.65, 0.7), Color(0.04, 0.42, 0.48))
+
+	_create_box(self, "BasePlatform", Vector3(0.0, 0.08, 0.0), Vector3(10.0, 0.3, 9.0), Color(0.12, 0.20, 0.23))
+	_create_box(self, "BaseCoreHousing", Vector3(0.0, 1.2, -1.0), Vector3(3.4, 2.4, 3.4), Color(0.09, 0.17, 0.21))
+	_create_box(self, "BaseCore", Vector3(0.0, 2.55, -1.0), Vector3(1.55, 1.55, 1.55), Color(0.08, 0.28, 0.33), Color(0.06, 0.78, 0.82))
+	_create_box(self, "CoreCrown", Vector3(0.0, 3.48, -1.0), Vector3(0.85, 0.12, 0.85), Color(0.30, 0.95, 0.91), Color(0.25, 0.85, 0.82))
+
+	for pillar_position in [Vector3(-4.5, 0.0, -4.0), Vector3(4.5, 0.0, -4.0), Vector3(-4.5, 0.0, 4.0), Vector3(4.5, 0.0, 4.0)]:
+		var pillar := _create_box(self, "BasePillar", pillar_position + Vector3(0.0, 1.5, 0.0), Vector3(0.55, 3.0, 0.55), Color(0.12, 0.25, 0.29))
+		pillar.rotation.y = 0.2
+
+	for ruin_data in [
+		[Vector3(-19.0, 1.2, -13.0), 1.2, Color(0.12, 0.19, 0.22)],
+		[Vector3(19.0, 1.2, -13.0), 1.05, Color(0.11, 0.17, 0.21)],
+		[Vector3(-20.0, 1.2, 11.0), 0.9, Color(0.14, 0.19, 0.22)],
+		[Vector3(20.0, 1.2, 12.0), 1.15, Color(0.12, 0.18, 0.22)],
+		[Vector3(-8.0, 1.2, -17.0), 0.7, Color(0.13, 0.20, 0.23)],
+		[Vector3(9.0, 1.2, 16.0), 0.75, Color(0.13, 0.20, 0.23)]
+	]:
+		_create_ruin(self, ruin_data[0], float(ruin_data[1]), ruin_data[2])
+
+	for index in range(18):
+		var x := zone_rng.randf_range(-22.0, 22.0)
+		var z := zone_rng.randf_range(-18.0, 18.0)
+		if Vector2(x, z).length() < 8.0:
+			continue
+		var height := zone_rng.randf_range(0.35, 0.9)
+		var width := zone_rng.randf_range(0.7, 1.5)
+		var rock := _create_box(self, "CoverDebris_%02d" % index, Vector3(x, height * 0.5, z), Vector3(width, height, width * 1.25), Color(0.10, 0.16, 0.19))
+		rock.rotation.y = zone_rng.randf_range(-PI, PI)
+
 
 func _material(color: Color, emission: Color = Color.BLACK) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
@@ -236,10 +329,12 @@ func _create_enemy(at_position: Vector3) -> void:
 func _create_camera() -> void:
 	camera = Camera3D.new()
 	camera.name = "WorldCamera"
-	camera.position = Vector3(0.0, 20.0, 16.0)
-	camera.rotation_degrees.x = -48.0
-	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 25.0
+	camera.position = Vector3(0.0, 18.5, 15.5)
+	camera.rotation_degrees.x = -49.0
+	camera.projection = Camera3D.PROJECTION_PERSPECTIVE
+	camera.fov = 56.0
+	camera.near = 0.1
+	camera.far = 90.0
 	camera.current = true
 	add_child(camera)
 
