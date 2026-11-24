@@ -176,50 +176,6 @@ func _create_box(parent: Node3D, name_value: String, position_value: Vector3, si
 	parent.add_child(visual)
 	return visual
 
-func _create_world() -> void:
-	var floor_body := StaticBody3D.new()
-	floor_body.name = "ZoneFloor"
-	add_child(floor_body)
-	var floor_shape := CollisionShape3D.new()
-	var floor_box := BoxShape3D.new()
-	floor_box.size = Vector3(52.0, 0.6, 42.0)
-	floor_shape.shape = floor_box
-	floor_shape.position.y = -0.3
-	floor_body.add_child(floor_shape)
-	_create_box(floor_body, "Ground", Vector3(0.0, -0.3, 0.0), Vector3(52.0, 0.6, 42.0), Color(0.10, 0.16, 0.17))
-
-	for index in range(30):
-		var x := zone_rng.randf_range(-23.0, 23.0)
-		var z := zone_rng.randf_range(-17.0, 17.0)
-		if Vector2(x, z).length() < 7.5:
-			continue
-		var width := zone_rng.randf_range(0.8, 2.4)
-		var height := zone_rng.randf_range(0.5, 1.8)
-		var depth := zone_rng.randf_range(0.8, 2.2)
-		var debris := _create_box(self, "Debris_%02d" % index, Vector3(x, height * 0.5, z), Vector3(width, height, depth), Color(0.16, 0.22, 0.24))
-		debris.rotation.y = zone_rng.randf_range(-PI, PI)
-
-	for wall_data in [
-		[Vector3(0.0, 1.2, -21.0), Vector3(52.0, 2.4, 0.8)],
-		[Vector3(0.0, 1.2, 21.0), Vector3(52.0, 2.4, 0.8)],
-		[Vector3(-26.0, 1.2, 0.0), Vector3(0.8, 2.4, 42.0)],
-		[Vector3(26.0, 1.2, 0.0), Vector3(0.8, 2.4, 42.0)]
-	]:
-		var barrier := StaticBody3D.new()
-		barrier.position = wall_data[0]
-		add_child(barrier)
-		var barrier_shape := CollisionShape3D.new()
-		var barrier_box := BoxShape3D.new()
-		barrier_box.size = wall_data[1]
-		barrier_shape.shape = barrier_box
-		barrier.add_child(barrier_shape)
-		_create_box(barrier, "ZoneBarrierVisual", Vector3.ZERO, wall_data[1], Color(0.08, 0.12, 0.14))
-
-	_create_box(self, "BasePlatform", Vector3(0.0, 0.08, 0.0), Vector3(9.0, 0.3, 8.0), Color(0.18, 0.25, 0.27))
-	_create_box(self, "BaseCore", Vector3(0.0, 1.4, -1.0), Vector3(2.8, 2.8, 2.8), Color(0.17, 0.24, 0.28), Color(0.05, 0.23, 0.25))
-	_create_box(self, "CoreLight", Vector3(0.0, 3.05, -1.0), Vector3(0.55, 0.15, 0.55), Color(0.2, 0.85, 0.8), Color(0.2, 0.85, 0.8))
-
-
 func _create_route_gate() -> void:
 	var gate := StaticBody3D.new()
 	gate.name = "RefractedRouteGate"
