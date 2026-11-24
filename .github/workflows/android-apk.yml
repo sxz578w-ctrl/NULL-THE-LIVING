@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - feature/afterzero-foundation
   workflow_dispatch:
 jobs:
   android:
@@ -84,6 +85,10 @@ jobs:
       - name: Run gameplay logic tests
         run: |
           "$GODOT_BIN" --headless --path . --script res://tests/test_runner.gd
+
+      - name: Run AFTERZERO project identity test
+        run: |
+          "$GODOT_BIN" --headless --path . --script res://tests/run_tests.gd
 
       - name: Smoke run the main scene
         run: |
