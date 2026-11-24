@@ -32,17 +32,7 @@ jobs:
           test -x "$SDK_ROOT/platform-tools/adb"
           test -x "$SDK_ROOT/build-tools/36.1.0/aapt"
 
-      - name: Cache Godot 4.7.2 engine and export templates
-        id: godot-cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.local/share/godot/export_templates/4.7.2.stable
-            /home/runner/work/_temp/godot
-          key: godot-4.7.2-linux-android-templates-v1
-
       - name: Download Godot 4.7.2 and matching Android templates
-        if: steps.godot-cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -62,7 +52,7 @@ jobs:
           test -s "$TEMPLATE_DIR/android_release.apk"
           test -s "$TEMPLATE_DIR/android_source.zip"
 
-      - name: Set Godot binary path
+      - name: Configure Android paths and Godot binary
         shell: bash
         run: |
           set -euo pipefail
@@ -78,6 +68,7 @@ jobs:
           export/android/java_sdk_path = "$JAVA_HOME"
           EOF
           "$GODOT" --version
+          "$JAVA_HOME/bin/java" -version
 
       - name: Install Python test dependency
         run: python -m pip install --disable-pip-version-check pytest
