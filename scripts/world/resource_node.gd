@@ -29,7 +29,7 @@ func collect(state: Node, multiplier: float = 1.0) -> bool:
 	if collected or amount <= 0:
 		return false
 	var reward := maxi(1, roundi(float(amount) * clampf(multiplier, 0.5, 2.0)))
-	if not state.add_resource(resource_id, reward):
+	if not bool(state.call("add_resource", resource_id, reward)):
 		return false
 	collected = true
 	queue_free()

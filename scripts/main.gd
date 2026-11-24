@@ -7,10 +7,10 @@ const PulseCoreScript = preload("res://scripts/world/pulse_core.gd")
 const TouchControlsScript = preload("res://scripts/ui/touch_controls.gd")
 const HUDScript = preload("res://scripts/ui/hud.gd")
 
-var player: CharacterBody3D
+var player
 var camera: Camera3D
-var touch_controls: CanvasLayer
-var hud: CanvasLayer
+var touch_controls
+var hud
 var pulse_core = PulseCoreScript.new()
 var pylon_nodes: Dictionary = {}
 var build_slots: Dictionary = {}
@@ -307,7 +307,7 @@ func _on_pulse_choice(choice: String) -> void:
 			ZoneState.stability = mini(100, ZoneState.stability + 10)
 		if BuildSystem.has_building("turret"):
 			ZoneState.danger = maxi(0, ZoneState.danger - 6)
-		for pylon: Node in pylon_nodes.values():
+		for pylon: Node3D in pylon_nodes.values():
 			pylon.visible = false
 		_show_message("تم تطبيق %s. حالة المنطقة تغيرت." % choice.to_upper())
 		_save_progress()
@@ -371,7 +371,7 @@ func _load_progress() -> void:
 	if ZoneState.pulse_count > 0:
 		pulse_core.resolved = true
 		pulse_core.progress = 3
-		for pylon: Node in pylon_nodes.values():
+		for pylon: Node3D in pylon_nodes.values():
 			pylon.visible = false
 	for slot_id: Variant in BuildSystem.built_slots.keys():
 		_create_building_visual(str(slot_id), str(BuildSystem.built_slots[slot_id]))
