@@ -28,11 +28,12 @@ func _create_joystick_hint() -> void:
 	var panel := Panel.new()
 	panel.anchor_left = 0.0
 	panel.anchor_top = 1.0
-	panel.anchor_right = 0.0
+	panel.anchor_left = 1.0
+	panel.anchor_right = 1.0
 	panel.anchor_bottom = 1.0
-	panel.offset_left = 34.0
+	panel.offset_left = -194.0
 	panel.offset_top = -194.0
-	panel.offset_right = 194.0
+	panel.offset_right = -34.0
 	panel.offset_bottom = -34.0
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.055, 0.13, 0.17, 0.25)
@@ -46,13 +47,13 @@ func _create_joystick_hint() -> void:
 func _create_button(role: String, offset: Vector2, callback: Callable) -> void:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(94.0, 76.0)
-	button.anchor_left = 1.0
-	button.anchor_right = 1.0
+	button.anchor_left = 0.0
+	button.anchor_right = 0.0
 	button.anchor_top = 1.0
 	button.anchor_bottom = 1.0
-	button.offset_left = offset.x
+	button.offset_left = 20.0 + absf(offset.x + 112.0) * 0.0 + (0.0 if role == "attack" else 106.0 if role == "dash" else 0.0)
 	button.offset_top = offset.y
-	button.offset_right = offset.x + 94.0
+	button.offset_right = button.offset_left + 94.0
 	button.offset_bottom = offset.y + 76.0
 	button.add_theme_font_size_override("font_size", 18)
 	button.add_theme_color_override("font_color", Color(0.92, 0.97, 0.98))
@@ -68,13 +69,13 @@ func _create_button(role: String, offset: Vector2, callback: Callable) -> void:
 
 func _create_pause_button() -> void:
 	pause_button = Button.new()
-	pause_button.anchor_left = 1.0
-	pause_button.anchor_right = 1.0
+	pause_button.anchor_left = 0.0
+	pause_button.anchor_right = 0.0
 	pause_button.anchor_top = 0.0
 	pause_button.anchor_bottom = 0.0
-	pause_button.offset_left = -66.0
+	pause_button.offset_left = 20.0
 	pause_button.offset_top = 22.0
-	pause_button.offset_right = -20.0
+	pause_button.offset_right = 66.0
 	pause_button.offset_bottom = 68.0
 	pause_button.add_theme_font_size_override("font_size", 22)
 	add_child(pause_button)
@@ -93,11 +94,14 @@ func set_language(language: String) -> void:
 		button.layout_direction = Control.LAYOUT_DIRECTION_RTL if current_language == "ar" else Control.LAYOUT_DIRECTION_LTR
 	pause_button.text = str(chosen["pause"])
 
+func is_movement_zone(position_value: Vector2) -> bool:
+	return position_value.x > screen_size.x * 0.57 and position_value.y > screen_size.y * 0.35
+
 func _input(event: InputEvent) -> void:
 	screen_size = get_viewport().get_visible_rect().size
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
-		if touch.pressed and touch_index == -1 and touch.position.x < screen_size.x * 0.43 and touch.position.y > screen_size.y * 0.35:
+		if touch.pressed and touch_index == -1 and is_movement_zone(touch.position):
 			touch_index = touch.index
 			joystick_origin = touch.position
 			joystick_value = Vector2.ZERO
