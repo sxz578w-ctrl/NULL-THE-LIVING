@@ -5,6 +5,9 @@ const ZoneStateScript = preload("res://scripts/world/zone_state.gd")
 const SaveServiceScript = preload("res://scripts/core/save_service.gd")
 const BuildSystemScript = preload("res://scripts/core/build_system.gd")
 const PulseCoreScript = preload("res://scripts/world/pulse_core.gd")
+const PlayerScript = preload("res://scripts/player/player_controller.gd")
+const EnemyScript = preload("res://scripts/enemies/enemy_controller.gd")
+const ResourceNodeScript = preload("res://scripts/world/resource_node.gd")
 
 var failures: int = 0
 var checks: int = 0
@@ -43,6 +46,10 @@ func _run() -> void:
 	_check(zone.danger < initial_danger, "anchor reduces danger")
 	_check(not zone.apply_pulse("harvest", "test-activation"), "activation cannot be reused")
 	_check(not zone.apply_pulse("unknown", "other-activation"), "unknown choice is rejected")
+	var restored_zone = ZoneStateScript.new()
+	root.add_child(restored_zone)
+	_check(restored_zone.load_snapshot(zone.snapshot()), "zone state restores from its snapshot")
+	_check(not restored_zone.apply_pulse("anchor", "test-activation"), "restored zone still prevents a repeated activation")
 
 	var puzzle = PulseCoreScript.new()
 	_check(not puzzle.resolve("anchor", zone, state), "puzzle cannot resolve before completion")
@@ -78,6 +85,35 @@ func _run() -> void:
 	var loaded: Dictionary = save_service.load_data(test_path)
 	_check(int(loaded.get("schema_version", -1)) == 1, "saved data round-trips")
 	_check(save_service.delete_save(test_path), "test save is removed")
+	var corrupt_file := FileAccess.open(test_path, FileAccess.WRITE)
+	corrupt_file.store_string("{broken json")
+	corrupt_file.close()
+	var recovered: Dictionary = save_service.load_data(test_path)
+	_check(int(recovered.get("schema_version", -1)) == 1, "corrupt JSON recovers to a safe default save")
+	_check(save_service.delete_save(test_path), "corrupt test save is removed")
+
+	var resource_node = ResourceNodeScript.new()
+	resource_node.resource_id = "flux"
+	resource_node.amount = 4
+	root.add_child(resource_node)
+	var flux_before: int = int(state.resources["flux"])
+	_check(resource_node.collect(state, 1.5), "resource node collects once with zone multiplier")
+	_check(int(state.resources["flux"]) == flux_before + 6, "resource multiplier is applied to the reward")
+	_check(not resource_node.collect(state, 1.0), "collected resource node cannot grant a second reward")
+
+	var player = PlayerScript.new()
+	root.add_child(player)
+	player.set_move_intent(Vector2(2.0, 0.0))
+	_check(is_equal_approx(player.move_intent.length(), 1.0), "player movement input is clamped to unit length")
+	player.take_damage(30.0)
+	_check(is_equal_approx(player.current_health, 70.0), "player health responds to incoming damage")
+
+	var enemy = EnemyScript.new()
+	root.add_child(enemy)
+	_check(not enemy.apply_damage(0.0), "enemy rejects zero damage")
+	_check(not enemy.apply_damage(-5.0), "enemy rejects negative damage")
+	_check(enemy.apply_damage(1000.0), "lethal enemy damage returns a defeat result")
+	_check(not enemy.apply_damage(100.0), "defeated enemy cannot be rewarded twice")
 
 	print("AFTERZERO TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures > 0 else 0)
