@@ -51,7 +51,7 @@ func _create_button(role: String, offset: Vector2, callback: Callable) -> void:
 	button.anchor_right = 0.0
 	button.anchor_top = 1.0
 	button.anchor_bottom = 1.0
-	button.offset_left = 20.0 + absf(offset.x + 112.0) * 0.0 + (0.0 if role == "attack" else 106.0 if role == "dash" else 0.0)
+	button.offset_left = 126.0 if role == "dash" else 20.0
 	button.offset_top = offset.y
 	button.offset_right = button.offset_left + 94.0
 	button.offset_bottom = offset.y + 76.0
