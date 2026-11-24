@@ -111,6 +111,9 @@ func request_attack() -> void:
 		_spawn_hit_flash(nearest.global_position)
 
 func _spawn_hit_flash(at_position: Vector3) -> void:
+	var scene := get_tree().current_scene
+	if scene == null:
+		return
 	var flash := MeshInstance3D.new()
 	var mesh := SphereMesh.new()
 	mesh.radius = 0.34
@@ -123,7 +126,7 @@ func _spawn_hit_flash(at_position: Vector3) -> void:
 	material.emission = Color(0.15, 0.8, 1.0)
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	flash.material_override = material
-	get_tree().current_scene.add_child(flash)
+	scene.add_child(flash)
 	var tween := create_tween()
 	tween.tween_property(flash, "scale", Vector3(2.4, 2.4, 2.4), 0.16)
 	tween.parallel().tween_property(material, "albedo_color:a", 0.0, 0.16)
