@@ -107,6 +107,8 @@ func _run() -> void:
 	_check(is_equal_approx(player.move_intent.length(), 1.0), "player movement input is clamped to unit length")
 	player.take_damage(30.0)
 	_check(is_equal_approx(player.current_health, 70.0), "player health responds to incoming damage")
+	_check(player.find_child("PlayerArmor", true, false) != null, "player has a distinct armor silhouette")
+	_check(player.find_child("PlayerCore", true, false) != null, "player has a readable luminous core")
 
 	var enemy = EnemyScript.new()
 	root.add_child(enemy)
@@ -114,6 +116,8 @@ func _run() -> void:
 	_check(not enemy.apply_damage(-5.0), "enemy rejects negative damage")
 	_check(enemy.apply_damage(1000.0), "lethal enemy damage returns a defeat result")
 	_check(not enemy.apply_damage(100.0), "defeated enemy cannot be rewarded twice")
+	_check(enemy.find_child("EnemyHead", true, false) != null, "enemy has a distinct head silhouette")
+	_check(enemy.find_child("EnemyCore", true, false) != null, "enemy exposes a combat-readable weak point")
 
 	print("AFTERZERO TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures > 0 else 0)
