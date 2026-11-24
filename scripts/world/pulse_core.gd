@@ -19,18 +19,18 @@ func is_ready() -> bool:
 func resolve(choice: String, zone: Node, state: Node) -> bool:
 	if not is_ready() or not ["anchor", "harvest", "refract"].has(choice):
 		return false
-	var next_id := "pulse_" + str(int(zone.pulse_count) + 1)
-	if not zone.apply_pulse(choice, next_id):
+	var next_id := "pulse_" + str(int(zone.get("pulse_count")) + 1)
+	if not bool(zone.call("apply_pulse", choice, next_id)):
 		return false
 	match choice:
 		"anchor":
-			state.add_resource("scrap", 5)
-			state.add_resource("echo", 2)
+			state.call("add_resource", "scrap", 5)
+			state.call("add_resource", "echo", 2)
 		"harvest":
-			state.add_resource("scrap", 18)
-			state.add_resource("flux", 4)
+			state.call("add_resource", "scrap", 18)
+			state.call("add_resource", "flux", 4)
 		"refract":
-			state.add_resource("echo", 5)
-			state.add_resource("flux", 2)
+			state.call("add_resource", "echo", 5)
+			state.call("add_resource", "flux", 2)
 	resolved = true
 	return true

@@ -137,7 +137,7 @@ func update_stats(resources: Dictionary, health: float, zone: Node, puzzle_progr
 	]
 	stats_label.text = prefix + "   HP %d%%" % roundi(health)
 	var pulse_text := "STABILITY %d   DANGER %d   CORE %d/3" % [
-		int(zone.stability), int(zone.danger), puzzle_progress
+		int(zone.get("stability")), int(zone.get("danger")), puzzle_progress
 	]
 	objective_label.text = pulse_text if current_language == "en" else "استقرار %d   خطر %d   النواة %d/3" % [
 		int(zone.stability), int(zone.danger), puzzle_progress

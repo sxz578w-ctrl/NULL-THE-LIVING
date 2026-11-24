@@ -109,7 +109,15 @@ func _create_world() -> void:
 		[Vector3(-26.0, 1.2, 0.0), Vector3(0.8, 2.4, 42.0)],
 		[Vector3(26.0, 1.2, 0.0), Vector3(0.8, 2.4, 42.0)]
 	]:
-		_create_box(self, "ZoneBarrier", wall_data[0], wall_data[1], Color(0.08, 0.12, 0.14))
+		var barrier := StaticBody3D.new()
+		barrier.position = wall_data[0]
+		add_child(barrier)
+		var barrier_shape := CollisionShape3D.new()
+		var barrier_box := BoxShape3D.new()
+		barrier_box.size = wall_data[1]
+		barrier_shape.shape = barrier_box
+		barrier.add_child(barrier_shape)
+		_create_box(barrier, "ZoneBarrierVisual", Vector3.ZERO, wall_data[1], Color(0.08, 0.12, 0.14))
 
 	_create_box(self, "BasePlatform", Vector3(0.0, 0.08, 0.0), Vector3(9.0, 0.3, 8.0), Color(0.18, 0.25, 0.27))
 	_create_box(self, "BaseCore", Vector3(0.0, 1.4, -1.0), Vector3(2.8, 2.8, 2.8), Color(0.17, 0.24, 0.28), Color(0.05, 0.23, 0.25))
@@ -293,6 +301,14 @@ func _on_interact() -> void:
 
 func _on_pulse_choice(choice: String) -> void:
 	if pulse_core.resolve(choice, ZoneState, GameState):
+		if BuildSystem.has_building("extractor"):
+			GameState.add_resource("scrap", 6)
+		if BuildSystem.has_building("relay"):
+			ZoneState.stability = mini(100, ZoneState.stability + 10)
+		if BuildSystem.has_building("turret"):
+			ZoneState.danger = maxi(0, ZoneState.danger - 6)
+		for pylon: Node in pylon_nodes.values():
+			pylon.visible = false
 		_show_message("تم تطبيق %s. حالة المنطقة تغيرت." % choice.to_upper())
 		_save_progress()
 	else:
@@ -352,6 +368,11 @@ func _load_progress() -> void:
 	GameState.replace_resources(data["resources"])
 	ZoneState.load_snapshot(data["zone_state"])
 	BuildSystem.load_snapshot(data["base_buildings"])
+	if ZoneState.pulse_count > 0:
+		pulse_core.resolved = true
+		pulse_core.progress = 3
+		for pylon: Node in pylon_nodes.values():
+			pylon.visible = false
 	for slot_id: Variant in BuildSystem.built_slots.keys():
 		_create_building_visual(str(slot_id), str(BuildSystem.built_slots[slot_id]))
 

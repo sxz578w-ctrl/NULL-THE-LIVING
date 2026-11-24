@@ -14,12 +14,15 @@ func try_build(slot_id: String, building_type: String, state: Node) -> bool:
 	if not BUILD_COSTS.has(building_type):
 		return false
 	var cost: Dictionary = BUILD_COSTS[building_type]
-	if not state.can_afford(cost):
+	if not bool(state.call("can_afford", cost)):
 		return false
-	if not state.spend_resources(cost):
+	if not bool(state.call("spend_resources", cost)):
 		return false
 	built_slots[slot_id] = building_type
 	return true
+
+func has_building(building_type: String) -> bool:
+	return built_slots.values().has(building_type)
 
 func snapshot() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
