@@ -8,6 +8,7 @@ const PulseCoreScript = preload("res://scripts/world/pulse_core.gd")
 const PlayerScript = preload("res://scripts/player/player_controller.gd")
 const EnemyScript = preload("res://scripts/enemies/enemy_controller.gd")
 const ResourceNodeScript = preload("res://scripts/world/resource_node.gd")
+const TouchControlsScript = preload("res://scripts/ui/touch_controls.gd")
 
 var failures: int = 0
 var checks: int = 0
@@ -118,6 +119,11 @@ func _run() -> void:
 	_check(not enemy.apply_damage(100.0), "defeated enemy cannot be rewarded twice")
 	_check(enemy.find_child("EnemyHead", true, false) != null, "enemy has a distinct head silhouette")
 	_check(enemy.find_child("EnemyCore", true, false) != null, "enemy exposes a combat-readable weak point")
+
+	var touch_controls = TouchControlsScript.new()
+	root.add_child(touch_controls)
+	_check(bool(touch_controls.call("is_movement_zone", Vector2(900.0, 500.0))), "right side of landscape screen is the movement zone")
+	_check(not bool(touch_controls.call("is_movement_zone", Vector2(120.0, 500.0))), "left side of landscape screen remains reserved for action controls")
 
 	print("AFTERZERO TESTS: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures > 0 else 0)
