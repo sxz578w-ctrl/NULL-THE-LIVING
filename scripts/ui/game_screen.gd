@@ -247,7 +247,7 @@ func _on_gesture_created(signature: Dictionary, start_target: String, end_target
 		status_label.text = "HUSH قطع مسار RELAY بسبب الضوضاء. ارفع إصبعك وانتظر حتى تهدأ الإشارة."
 		return
 	if mode == "lab":
-		var required_target := {"LUMA":"LUMA","VEYL":"SEED","ECHO":"ECHO"}.get(selected_species, "")
+		var required_target: String = str({"LUMA":"LUMA","VEYL":"SEED","ECHO":"ECHO"}.get(selected_species, ""))
 		if start_target != required_target:
 			status_label.text = "ابدأ اللمسة على %s حتى يتعلم الكائن بصمتك." % required_target
 			return
