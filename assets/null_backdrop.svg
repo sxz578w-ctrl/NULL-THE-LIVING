@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280">
+<defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#06091d"/><stop offset=".48" stop-color="#171c4b"/><stop offset="1" stop-color="#080b22"/></linearGradient><radialGradient id="glow"><stop stop-color="#7b5cff" stop-opacity=".72"/><stop offset="1" stop-color="#462b9d" stop-opacity="0"/></radialGradient><linearGradient id="island" x2="0" y2="1"><stop stop-color="#263c70"/><stop offset="1" stop-color="#10162d"/></linearGradient><filter id="blur"><feGaussianBlur stdDeviation="26"/></filter></defs>
+<rect width="720" height="1280" fill="url(#sky)"/>
+<circle cx="350" cy="420" r="240" fill="url(#glow)" filter="url(#blur)"/>
+<circle cx="600" cy="720" r="160" fill="#1a72ba" opacity=".14" filter="url(#blur)"/>
+<g fill="#d6e6ff" opacity=".7">
+<circle cx="48" cy="90" r="2"/><circle cx="141" cy="180" r="2"/><circle cx="270" cy="94" r="1.8"/><circle cx="610" cy="155" r="2"/><circle cx="520" cy="280" r="1.5"/><circle cx="90" cy="390" r="1.7"/><circle cx="680" cy="460" r="2"/><circle cx="360" cy="580" r="1.5"/><circle cx="210" cy="710" r="2"/><circle cx="590" cy="850" r="1.8"/><circle cx="110" cy="980" r="1.5"/><circle cx="430" cy="1080" r="2"/><circle cx="650" cy="1160" r="1.5"/>
+</g>
+<g opacity=".8" fill="url(#island)" stroke="#4b8bcb" stroke-opacity=".45" stroke-width="3">
+<path d="M-40 620 L95 535 L245 585 L206 690 L35 720Z"/><path d="M475 590 L620 520 L760 565 L715 690 L530 700Z"/><path d="M190 925 L340 850 L510 900 L470 1010 L245 1030Z"/>
+</g>
+<g fill="none" stroke="#45cfff" stroke-width="3" opacity=".4">
+<path d="M70 650 Q190 520 350 600 T670 610"/><path d="M110 990 Q310 850 520 940"/><path d="M80 350 Q260 210 470 330"/>
+</g>
+<g fill="#63dff5" opacity=".62">
+<path d="M116 535 l14 -58 15 58z"/><path d="M576 520 l20 -72 17 72z"/><path d="M337 850 l18 -66 19 66z"/>
+</g>
+<g fill="#b68cff" opacity=".75">
+<circle cx="350" cy="420" r="44" fill="none" stroke="#a88bff" stroke-width="4"/><circle cx="350" cy="420" r="16"/><path d="M350 350 Q392 390 350 420 Q308 390 350 350Z"/><path d="M420 420 Q380 462 350 420 Q380 378 420 420Z"/>
+</g>
+<path d="M0 1140 Q160 1080 300 1152 T720 1120 V1280 H0Z" fill="#080b1b" opacity=".9"/>
+</svg>
