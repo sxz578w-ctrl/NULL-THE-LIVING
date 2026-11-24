@@ -285,21 +285,21 @@ func _on_interact() -> void:
 	var nearest_kind := ""
 	for resource: Node in get_tree().get_nodes_in_group("resource_nodes"):
 		if resource is Node3D:
-			var distance := player.global_position.distance_to((resource as Node3D).global_position)
+			var distance: float = player.global_position.distance_to((resource as Node3D).global_position)
 			if distance < nearest_distance:
 				nearest = resource as Node3D
 				nearest_distance = distance
 				nearest_kind = "resource"
 	for pylon: Node in get_tree().get_nodes_in_group("pylons"):
 		if pylon is Node3D:
-			var distance := player.global_position.distance_to((pylon as Node3D).global_position)
+			var distance: float = player.global_position.distance_to((pylon as Node3D).global_position)
 			if distance < nearest_distance:
 				nearest = pylon as Node3D
 				nearest_distance = distance
 				nearest_kind = "pylon"
 	for slot: Node in get_tree().get_nodes_in_group("build_slots"):
 		if slot is Node3D:
-			var distance := player.global_position.distance_to((slot as Node3D).global_position)
+			var distance: float = player.global_position.distance_to((slot as Node3D).global_position)
 			if distance < nearest_distance:
 				nearest = slot as Node3D
 				nearest_distance = distance
@@ -430,7 +430,7 @@ func _save_progress() -> void:
 func _process(delta: float) -> void:
 	if not is_instance_valid(camera) or not is_instance_valid(player):
 		return
-	var target_position := player.global_position + Vector3(0.0, 20.0, 16.0)
+	var target_position: Vector3 = player.global_position + Vector3(0.0, 20.0, 16.0)
 	camera.global_position = camera.global_position.lerp(target_position, clampf(delta * 5.0, 0.0, 1.0))
 	camera.look_at(player.global_position, Vector3.UP)
 	_update_hud()
