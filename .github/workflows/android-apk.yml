@@ -93,7 +93,7 @@ jobs:
         run: |
           set -euo pipefail
           "$GODOT_BIN" --headless --path . --script res://tests/run_tests.gd 2>&1 | tee /tmp/afterzero-tests.log
-          if grep -Eq "SCRIPT ERROR|Parse Error:|Failed to load script|AFTERZERO TESTS: [0-9]+, [1-9][0-9]* failures" /tmp/afterzero-tests.log; then
+          if grep -Eq "SCRIPT ERROR|Parse Error:|Failed to load script|AFTERZERO TESTS: [0-9]+ checks, [1-9][0-9]* failures" /tmp/afterzero-tests.log; then
             echo "Gameplay test log contains a script or test failure."
             exit 1
           fi
